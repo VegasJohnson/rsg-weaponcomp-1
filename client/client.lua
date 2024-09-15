@@ -1,5 +1,7 @@
 local RSGCore = exports['rsg-core']:GetCoreObject()
 
+local num = tonumber
+local match = string.match
 local inCustom = false
 local wepobject = nil
 local camera = nil
@@ -461,6 +463,77 @@ AddEventHandler("rsg-weaponcomp:client:LoadComponents", function()
     Wait(100)
     componentsSql = nil
 end)
+RegisterNetEvent("rsg-weaponcomp:client:LoadComponents")
+AddEventHandler("rsg-weaponcomp:client:LoadComponents", function(component, wepHash)
+    local ped = PlayerPedId()
+    local shared = Config.Shared
+    local specific = Config.Specific
+    local weapon_type = nil
+
+    _, wepHash = GetCurrentPedWeapon(ped, true, 0, true)
+    local grouphash = num(GetWeapontypeGroup(wepHash))
+
+    if num(`GROUP_REPEATER`) == grouphash then
+        weapon_type = 'LONGARM'
+    elseif num(`GROUP_SHOTGUN`) == grouphash then
+        weapon_type = 'SHOTGUN'
+    elseif num(`GROUP_HEAVY`) == grouphash then
+        weapon_type = 'LONGARM'
+    elseif num(`GROUP_RIFLE`) == grouphash then
+        weapon_type = 'LONGARM'
+    elseif num(`GROUP_SNIPER`) == grouphash then
+        weapon_type = 'LONGARM'
+    elseif num(`GROUP_REVOLVER`) == grouphash then
+        weapon_type = 'SHORTARM'
+    elseif num(`GROUP_PISTOL`) == grouphash then
+        weapon_type = 'SHORTARM'
+    elseif num(`GROUP_BOW`) == grouphash then
+        weapon_type = 'GROUP_BOW'
+    elseif num(`GROUP_MELEE`) == grouphash then
+        weapon_type = 'MELEE_BLADE'
+    end
+
+    Wait(0)
+
+    for k, v in pairs(shared) do
+        if k ~= weapon_type then goto continue end
+
+        for _, v2 in pairs(v) do
+            for i = 1, 100 do
+                if v2[i] then
+                    RemoveWeaponComponentFromPed(ped, GetHashKey(v2[i]), wepHash)
+                end
+            end
+        end
+
+        ::continue::
+    end
+
+    for k, v in pairs(specific) do
+        if num(GetHashKey(k)) ~= num(wepHash) then goto continue end
+
+        for k2, v2 in pairs(v) do
+            for i = 1, 100 do
+                if v2[i] then
+                    RemoveWeaponComponentFromPed(ped, GetHashKey(v2[i]), wepHash)
+                end
+
+                if k2 == 'BARREL' then
+                    Citizen.InvokeNative(0x74C9090FDD1BB48E, ped, GetHashKey(v2[1]), wepHash, true)
+                end
+
+                if k2 == 'GRIP' then
+                    Citizen.InvokeNative(0x74C9090FDD1BB48E, ped, GetHashKey(v2[1]), wepHash, true)
+                end
+            end
+        end
+
+        ::continue::
+    end
+
+    Wait(5)
+
+end)
 
 exports('InWeaponCustom', function()
     return inCustom
@@ -504,6 +577,7 @@ AddEventHandler("rsg-weaponcomp:client:LoadComponents_selection", function()
     end
     Wait(100)
     componentsPreSql = nil
+	TriggerEvent('rsg-weaponcomp:client:LoadComponents')
 end)
 
 -----------------------------------
